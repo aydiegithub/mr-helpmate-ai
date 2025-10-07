@@ -3,32 +3,29 @@ import os
 from datetime import datetime
 
 class Logger:
-    def __init__(self, name="mr_helpmate_logger"):
-        # Ensure logs directory exists
-        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'logs')
-        os.makedirs(log_dir, exist_ok=True)
+    def __init__(self, log_dir='logs'):
+        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.log_dir = os.path.join(root_dir, log_dir)
+        os.makedirs(self.log_dir, exist_ok=True)
+        log_filename = datetime.now().strftime('%Y-%m-%d_%H-%M-%S.log')
+        log_path = os.path.join(self.log_dir, log_filename)
 
-        # Log file with date and time stamp
-        log_filename = datetime.now().strftime('log_%Y-%m-%d_%H-%M-%S.log')
-        log_path = os.path.join(log_dir, log_filename)
-
-        # Configure logger
-        self.logger = logging.getLogger(name)
-        self.logger.setLevel(logging.DEBUG)
-
-        # File handler
-        file_handler = logging.FileHandler(log_path)
-        file_handler.setLevel(logging.DEBUG)
-
-        # Formatter
+        self.logger = logging.getLogger('custom_logger')
+        self.logger.setLevel(logging.INFO)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+        file_handler = logging.FileHandler(log_path)
         file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
 
-        # Add handler if not already added
-        if not self.logger.hasHandlers():
-            self.logger.addHandler(file_handler)
+    def info(self, message):
+        self.logger.info(message)
 
-    def get_logger(self):
-        return self.logger
+    def warning(self, message):
+        self.logger.warning(message)
 
-__all__ = ['Logger']
+    def error(self, message):
+        self.logger.error(message)
+
+    def debug(self, message):
+        self.logger.debug(message)
