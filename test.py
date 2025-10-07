@@ -44,6 +44,9 @@ results = collection.query(
     include=["documents", "metadatas", "distances"]  # "ids" is returned separately and not a valid include key
 )
 
+<<<<<<< HEAD
+print(results)
+=======
 # ---- Neat Output for Retrieved Results ----
 print("\n🔍 Top Retrieved Results")
 print("────────────────────────────\n")
@@ -73,3 +76,4 @@ for idx, (doc_id, distance, document, metadata) in enumerate(zip(ids_list, dista
 
 # Optional: Print summary
 print(f"✅ Total Results Retrieved: {len(ids_list)}\n")
+>>>>>>> chromadb-setup
