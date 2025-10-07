@@ -44,4 +44,32 @@ results = collection.query(
     include=["documents", "metadatas", "distances"]  # "ids" is returned separately and not a valid include key
 )
 
-print(results)
+# ---- Neat Output for Retrieved Results ----
+print("\n🔍 Top Retrieved Results")
+print("────────────────────────────\n")
+
+# Unpack results safely
+ids_list = results.get("ids", [[]])[0]
+distances = results.get("distances", [[]])[0]
+documents = results.get("documents", [[]])[0]
+metadatas = results.get("metadatas", [[]])[0]
+
+# Print each result clearly
+for idx, (doc_id, distance, document, metadata) in enumerate(zip(ids_list, distances, documents, metadatas), start=1):
+    print(f"📄 Result #{idx}")
+    print(f"   🆔 ID: {doc_id}")
+    print(f"   📏 Distance: {distance:.6f}")
+    print("   🧾 Document Snippet:")
+    print(f"      {document.strip()[:500]}{'...' if len(document) > 500 else ''}")
+    
+    if metadata:
+        print("   🗂️ Metadata:")
+        for key, value in metadata.items():
+            print(f"      - {key}: {value}")
+    else:
+        print("   🗂️ Metadata: None")
+    
+    print("────────────────────────────\n")
+
+# Optional: Print summary
+print(f"✅ Total Results Retrieved: {len(ids_list)}\n")
