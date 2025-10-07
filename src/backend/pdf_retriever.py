@@ -17,8 +17,7 @@ class Extractor:
     def __init__(self):
         pass
 
-    @staticmethod
-    def content_extractor_node(file_path: str) -> Dict[str, Any]:
+    def content_extractor(self, file_path: str) -> Dict[str, Any]:
         """
         Extracts text and tables from each page of the PDF file.
 
