@@ -168,4 +168,6 @@ class VectorEmbedding():
         
         generated_id = f"{hash_str}n{index}"
         
-        return generated_id
+        return generated_id 
+    
+# Updated code above
