@@ -2,9 +2,6 @@ from src.constants import GOOGLE_API_KEY, MODEL
 from src.artifacts import ModerationCheckPrompt, IntentConfirmationPrompt
 from src.logging import Logger
 import json
-
-# OpenAI-compatible Chat Completions API for Gemini
-# Requires: pip install openai>=1.50.0
 from openai import OpenAI
 
 logging = Logger()
