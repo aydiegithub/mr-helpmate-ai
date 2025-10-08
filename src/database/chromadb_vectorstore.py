@@ -162,7 +162,7 @@ class VectorStore:
             result = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=top_k,
-                include=["documents", "metadatas", "distances"],
+                include=["documents", "metadatas", "distances", "embeddings"],
             )
             logging.info("Query completed successfully.")
 
