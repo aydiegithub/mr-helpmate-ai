@@ -17,7 +17,7 @@ class Extractor:
     def __init__(self):
         pass
 
-    def content_extractor(self, file_path: str) -> Dict[str, Any]:
+    def content_extractor(self, file_path: str) -> str:
         """
         Extracts text and tables from each page of the PDF file.
 
@@ -28,8 +28,8 @@ class Extractor:
 
         Returns
         -------
-        Dict[str, Any]
-            A dictionary containing the extracted content.
+        str
+            A string containing the extracted content.
         """
         content = []
         try:
@@ -39,23 +39,21 @@ class Extractor:
                     try:
                         page_text = page.extract_text()
                         if page_text:
-                            content.append(f"[## Page {page_num}]\n{page_text}")
+                            content.append(page_text)
                         tables = page.extract_tables()
                         for t_idx, table in enumerate(tables, 1):
                             table_string = "\n".join(
                                 ["\t".join(cell if cell is not None else "" for cell in row) for row in table]
                             )
-                            content.append(f"[## Page {page_num}]\n{table_string}")
+                            content.append(table_string)
                     except Exception as e:
                         logging.warning(f"Failed to extract content from page {page_num}: {e}")
         except FileNotFoundError:
             logging.error(f"File not found: {file_path}")
-            return {"content": ""}
+            return ""
         except Exception as e:
             logging.error(f"Error opening or processing PDF file: {e}")
-            return {"content": ""}
+            return ""
 
         logging.info(f"Extraction completed for file: {file_path}")
-        return {
-            "content": "\n\n".join(content)
-        }
+        return "\n\n".join(content)
