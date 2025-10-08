@@ -175,48 +175,13 @@ class IntentConfirmationPrompt:
         - Question: `{{question}}`
 
         Decision rule (True if any apply):
-        - Insurance topics: policy, claim, coverage, premium, deductible, copay, coinsurance, underwriting, beneficiary, rider, endorsement.
+        - Insurance topics: policy, claim, accidental death, death, mortage, coverage, premium, deductible, copay, coinsurance, underwriting, beneficiary, rider, endorsement, anything related to life insurence and health insurence.
         - Banking topics: account, savings, checking, KYC, AML, deposit, withdrawal, transfer, wire, card, ATM, overdraft, interest rate, fees.
         - Credit/loan topics: credit score, mortgage, loan, refinancing, APR, EMI, installment, collateral, lien.
         - Payments/fintech: payments, wallets, ACH, SWIFT, POS, chargeback, settlement.
         - Investments/finance: investing, brokerage, stock, bond, fund, ETF, NAV, risk, diversification, yield, tax, budgeting, income, salary, expense.
         - If the question is clearly about any insurance, banking, or finance concept—even without specific product names—return True.
         - Otherwise return False.
-
-        Output format:
-        - Respond with exactly one word: True or False
-        - No punctuation, no quotes, no spaces, no explanations.
-
-        Few-shot examples:
-        Q: What is a deductible in health insurance?
-        A: True
-
-        Q: Transfer $500 from savings to checking—what fees apply?
-        A: True
-
-        Q: How do I improve my credit score quickly?
-        A: True
-
-        Q: Who won the basketball game last night?
-        A: False
-
-        Q: Show me Python code for quicksort.
-        A: False
-
-        Q: What’s the APR on a 30-year fixed mortgage?
-        A: True
-
-        Q: Plan a three-day trip to Paris.
-        A: False
-
-        Q: Should I pick a Roth or traditional IRA?
-        A: True
-
-        Q: What is the capital of Japan?
-        A: False
-
-        Q: Write a poem about rainy days.
-        A: False
     """
     
     
