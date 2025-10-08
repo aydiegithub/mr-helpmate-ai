@@ -24,7 +24,7 @@ class Reranker():
                          embeddings: list[list[float]] = None,
                          query: str = None,
                          cross_encoder: bool = True,
-                         top_k: int = 3) -> list[str]:
+                         top_k: int = 3) -> list[list[float, str]]:
         """
         Rerank documents using either cross-encoder or cosine similarity method.
         Args:
@@ -57,7 +57,7 @@ class Reranker():
     def rerank_with_cross_encoders(self, 
                                    documents: list[str] = None,
                                    query: str = None,
-                                   top_k: int = 3) -> list[list]:
+                                   top_k: int = 3) -> list[list[float, str]]:
         """
         Rerank documents using cross-encoder model.
         Args:
@@ -71,7 +71,7 @@ class Reranker():
             logging.info(f"Reranking {len(documents)} documents with cross-encoder")
             hq_document = []
             for doc in documents:
-                score = self.cross_encoder.predict([doc, query])
+                score = self.cross_encoder.predict([query, doc])
                 heapq.heappush(hq_document, (score, doc))
                 if len(hq_document) > top_k:
                     heapq.heappop(hq_document)
@@ -87,7 +87,7 @@ class Reranker():
                                       documents: list[str] = None, 
                                       embeddings: list[list[float]] = None,
                                       query: str = None,
-                                      top_k: int = 3):
+                                      top_k: int = 3) -> list[list[float, str]]:
         """
         Rerank documents using cosine similarity.
         Args:

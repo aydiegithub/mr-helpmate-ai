@@ -4,6 +4,7 @@ dotenv.load_dotenv()
 
 GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY")
 EMBEDDING_MODEL: str = "models/text-embedding-004"
+MODEL: str = "gemini-2.5-flash"
 
 CHROMA_API_KEY: str = os.getenv("CHROMA_API_KEY")
 CHROMA_TENANT: str = os.getenv("CHROMA_TENANT")

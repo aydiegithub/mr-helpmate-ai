@@ -33,7 +33,7 @@ vector_store = VectorStore()
 # vec_emb = VectorEmbedding()
 # print(collection.query(vec_emb.generate_embedding("What is the possibility of insurence if someone dies")['embeddings']))
 st = time.time()
-query="What is the possibility of insurence in place of accident"
+query="What are the legal requirements for two individuals to establish a Civil Union in Rhode Island according to this policy?"
 
 response_top_10 = vector_store.query_from_db(
     query=query, 
