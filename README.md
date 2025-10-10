@@ -1,8 +1,11 @@
-# Mr. HelpMate AI — RAG with ChromaDB, and Gemini
+# Mr. HelpMate AI — RAG with ChromaDB, Gemini, FastAPI, LangGraph, and Render
 
 This repository implements Mr. HelpMate AI — a PDF-focused Retrieval-Augmented Generation (RAG) system that:
 - Ingests PDFs, chunks text with overlap, generates Google Gemini embeddings, and stores them in ChromaDB (Cloud).
 - Serves a RAG chatbot workflow that moderates inputs, validates intent, retrieves with a cache-first strategy, re-ranks using a cross-encoder, and generates grounded answers with Gemini, while maintaining chat history.
+- Provides a web-based interface via FastAPI and WebSocket for real-time interaction.
+- Uses LangGraph for orchestrating the chatbot logic in a structured graph.
+- Deployed on Render for scalable hosting.
 
 Repository: [aydiegithub/mr-helpmate-ai](https://github.com/aydiegithub/mr-helpmate-ai)
 
@@ -13,6 +16,8 @@ Repository: [aydiegithub/mr-helpmate-ai](https://github.com/aydiegithub/mr-helpm
 - Project Structure
 - Setup
 - Environment Variables
+- Deployment on Render
+- API Usage
 - Usage
   - 1) Ingest PDFs to ChromaDB
   - 2) Run the RAG Chatbot (interactive loop)
@@ -33,8 +38,10 @@ Repository: [aydiegithub/mr-helpmate-ai](https://github.com/aydiegithub/mr-helpm
 - Re-ranking of retrieved candidates using a Sentence-Transformers cross-encoder for higher answer quality.
 - Gemini chat completions with a strict system instruction (domain-gated, context-only).
 - Safety moderation and domain intent confirmation before retrieval and generation.
+- Web-based chat interface served via FastAPI and WebSocket for real-time interaction.
+- Workflow orchestration using LangGraph for structured, stateful chatbot logic.
+- Deployed on Render for easy and scalable access.
 - Logging hooks across components.
-
 
 
 ## Workflows
@@ -46,6 +53,7 @@ Repository: [aydiegithub/mr-helpmate-ai](https://github.com/aydiegithub/mr-helpm
 - Upsert documents, embeddings, and deterministic IDs into a ChromaDB Cloud collection.
 
 2) RAG Chatbot
+- The chatbot is implemented using LangGraph, a library for building stateful workflows, ensuring robust flow control.
 - Moderation check: If flagged, stop.
 - Intent check: If out-of-domain, stop with a helpful notice.
 - Retrieval: 
@@ -54,7 +62,6 @@ Repository: [aydiegithub/mr-helpmate-ai](https://github.com/aydiegithub/mr-helpm
 - Re-rank: Use CrossEncoder (e.g., cross-encoder/ms-marco-MiniLM-L-6-v2) to pick the best top-N (default 3).
 - Generate: Provide reranked context + system instruction + user message to Gemini chat model. Maintain chat history.
 - Optional: Re-check moderation on the generated output.
-
 
 
 ## Project Structure
@@ -66,6 +73,7 @@ The structure below reflects the repository as shown in the screenshots and the 
 ├── .env
 ├── .gitignore
 ├── .python-version
+├── index.html                 # Web chat interface
 ├── LICENSE
 ├── README.md
 ├── app.py
@@ -118,14 +126,14 @@ The structure below reflects the repository as shown in the screenshots and the 
 
 - With uv:
   ```bash
-  uv add -r requirements.txt
-  uv run app.py
+  pip install uv && uv add -r requirements.txt
+  uv run main.py
   ```
 
 - With pip:
   ```bash
   pip install -r requirements.txt
-  python app.py
+  python main.py
   ```
 
 3) Environment
@@ -158,7 +166,63 @@ Chunking defaults (if managed via constants; otherwise see code):
 
 
 
-## Usage
+## Deployment on Render
+
+1. Sign up for a Render account at [https://render.com/](https://render.com/).
+2. Create a new Web Service and connect your GitHub repository `aydiegithub/mr-helpmate-ai`.
+3. Set the Build Command to: `pip install uv && uv add -r requirements.txt`
+4. Set the Start Command to: `uv run main.py`
+5. Configure the environment variables in the Render dashboard (copy from your `.env`).
+6. Deploy the service. Once deployed, your app will be accessible at the provided Render URL, with the chat interface at the root path.
+
+Note: Ensure `index.html` is present in the root directory for the web UI to work.
+
+
+
+## API Usage
+
+The application exposes a REST API and WebSocket for programmatic access or integration.
+
+### Endpoints
+
+- `GET /`: Serves the `index.html` file for the web-based chat interface.
+- `GET /health`: Health check endpoint. Returns a JSON object with `status`, `service`, and `version`.
+- `WebSocket /ws/{session_id}`: Real-time chat endpoint for interactive conversations.
+  - **Send**: JSON object in the format `{"message": "your user query here"}`
+  - **Receive**: JSON object `{"type": "response", "message": "AI-generated response"}` on success, or `{"type": "error", "message": "error description"}` on failure.
+
+### Usage Example
+
+To use the API programmatically (e.g., in a Python script or another app):
+
+1. Choose a unique `session_id` (string) for conversation continuity.
+2. Establish a WebSocket connection to `/ws/{session_id}` (use `wss://` for secure connections on Render).
+3. Send user messages as JSON and process the responses.
+4. For the web interface, simply visit the root URL in a browser.
+
+Example Python code for WebSocket interaction (requires `websockets` library):
+
+```python
+import asyncio
+import websockets
+import json
+
+async def chat():
+    uri = "ws://localhost:8000/ws/my_session_123"  # Replace with your URL
+    async with websockets.connect(uri) as websocket:
+        await websocket.send(json.dumps({"message": "Hello, how can you help with insurance?"}))
+        response = await websocket.recv()
+        data = json.loads(response)
+        print("AI:", data["message"])
+
+asyncio.run(chat())
+```
+
+For local development, replace the URI with `ws://localhost:8000/ws/{session_id}`. For production on Render, use the full Render URL.
+
+
+
+### Usage
 
 ### 1) Ingest PDFs to ChromaDB
 
@@ -195,65 +259,22 @@ Notes:
 
 ### 2) Run the RAG Chatbot (interactive loop)
 
-This mirrors the basic loop you shared:
+The chatbot can be run via the web interface (recommended) or programmatically as shown below. The logic is now orchestrated by a LangGraph for better flow control.
 
 ```python
-from src.backend.generation_layer import ChatCompletion
-from src.artifacts import SystemInstruction
-from src.backend.intent_moderation_check import (IntentCheck, ModerationCheck)
-from src.database.chromadb_vectorstore import VectorStore
-from src.backend.reranker import Reranker
+# For programmatic use, you can invoke the graph directly (from main.py)
+from main import chatbot_graph
 
-mod_chk = ModerationCheck()
-int_cnf = IntentCheck()
-chat_completion = ChatCompletion()
-vector_store = VectorStore()
-reranker = Reranker()
-
-messages = [
-    {"role": "system", "content": SystemInstruction.prompt}
-]
-
-while True:
-    input_message = input("User: ")
-    if input_message in ["exit", "bye", "end"]:
-        print("Thank you for your time, hope I helped. Bye!")
-        print("Chat Terminated....")
-        break
-
-    if mod_chk.check_moderation(input_message=input_message):
-        print("Your Conversation has been flagged!, restarting the conversation.")
-        continue
-
-    if int_cnf.check_intent(input_message=input_message):
-        top_10_documents = vector_store.query_from_db(query=input_message, top_k=10)
-
-        reranked_top_3 = reranker.rerank_documents(
-            documents=top_10_documents['documents'],
-            query=input_message,
-            top_k=3
-        )
-
-        reranked_context = ""
-        for score, doc in reranked_top_3:
-            reranked_context += doc + "\n\n\n"
-
-        messages.append({
-            "role": "user",
-            "content": input_message + "###context:\n" + reranked_context
-        })
-
-        ai_response = chat_completion.chat_completion(messages=messages)
-
-        if mod_chk.check_moderation(input_message=ai_response):
-            print("Your Conversation has been flagged!, restarting the conversation.")
-            continue
-
-        print("Assistant:", ai_response, end="\n\n")
-    else:
-        print("Your question is out of scope or context, please ask the right question related to the domain.")
-        continue
+# Example invocation
+state = {
+    "messages": [{"role": "system", "content": "System prompt here"}],
+    "input_message": "What is insurance coverage?"
+}
+result = chatbot_graph.invoke(state)
+print("AI Response:", result.get("ai_response"))
 ```
+
+For a full interactive loop, see the WebSocket implementation in `main.py` or use the web UI.
 
 Implementation details:
 - Cache: `chromadb_cache.CacheVectorStore` stores query embeddings and metadata of top IDs (serialized under `ids_json`).
@@ -274,6 +295,7 @@ Implementation details:
 - `src/backend/generation_layer.py` — ChatCompletion (Gemini chat wrapper)
 - `src/backend/intent_moderation_check.py` — ModerationCheck and IntentCheck (Gemini chat prompts)
 - `src/artifacts/__init__.py` — SystemInstruction, IntentConfirmationPrompt, ModerationCheckPrompt
+- `main.py` — FastAPI app with LangGraph chatbot integration and WebSocket endpoint
 
 
 
@@ -283,6 +305,7 @@ Implementation details:
 - Cache distance threshold controls “similar enough” semantics for prior queries; start around 0.2 and adjust after observing hits.
 - Consider persisting rerank outputs for popular queries if latency matters.
 - Log at info/warn levels to diagnose retrieval vs. cache vs. re-rank timing bottlenecks.
+- For production, use the Render deployment for scalability and the web interface for user interaction.
 
 
 
@@ -300,6 +323,12 @@ Implementation details:
   - Confirm IDs are being serialized under `ids_json` and successfully parsed on read.
 - Chroma Cloud errors:
   - Verify `CHROMA_TENANT` and `CHROMA_DATABASE` names and your account access.
+- WebSocket connection issues:
+  - Ensure the session_id is consistent for conversation continuity.
+  - Check browser console for errors; ensure the WebSocket URL matches your deployment (localhost for local, Render URL for production).
+- Deployment on Render fails:
+  - Confirm all environment variables are set in Render.
+  - Check build logs for dependency issues; ensure `uv` is compatible with Render's environment.
 
 
 
@@ -313,5 +342,5 @@ See [LICENSE](https://github.com/aydiegithub/mr-helpmate-ai/blob/main/LICENSE).
 - Email: developer@aydie.in
 - Website: https://www.aydie.in/
 - Projects: https://projects.aydie.in/
-- Completed On: Oct, 8th 2025
+- Completed On: Oct 10th 2025
 - Repository: [aydiegithub/mr-helpmate-ai](https://github.com/aydiegithub/mr-helpmate-ai)
